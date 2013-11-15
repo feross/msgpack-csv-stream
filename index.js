@@ -97,12 +97,13 @@ MStream.prototype._transform = function (chunk, encoding, callback) {
     this.buf = chunk
   }
 
-  // Consume msgpack "messages" from the stream, one by one
+  // Consume messages from the stream, one by one
   while (this.buf && this.buf.length > 0) {
     var msg = msgpack.unpack(this.buf)
-    if (!msg) {
+
+    // Buffer does not contain complete message
+    if (!msg)
       break
-    }
 
     this.push(msg)
 
