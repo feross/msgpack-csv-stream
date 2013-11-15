@@ -9,18 +9,16 @@ var url = require('url')
 var util = require('util')
 var zlib = require('zlib')
 
-var client = knox.createClient(secret.s3)
-
-var numCPUs = require('os').cpus().length
+var PORT = 3000
+var NUM_CPUS = require('os').cpus().length
 
 if (cluster.isMaster) {
-  for (var i = 0; i < numCPUs; i++) {
+  // Spawn a one child process per CPU core, to get full CPU utilization
+  for (var i = 0; i < NUM_CPUS; i++) {
     cluster.fork()
   }
-  cluster.on('exit', function(worker) {
-    console.log('worker ' + worker.process.pid + ' died')
-  })
 } else {
+  var s3Client = knox.createClient(secret.s3)
   var server = http.createServer()
 
   server.on('request', function (req, res) {
@@ -29,16 +27,19 @@ if (cluster.isMaster) {
     if (!query.file)
       return error(res, 400, new Error('Missing required `file` param'))
 
-    client.getFile('/' + query.file, function (err, s3) {
-      if (err) return error(res, 404, new Error('Not Found'))
+    s3Client.getFile('/' + query.file, function (err, s3) {
+      if (err)
+        return error(res, 404, new Error('Not Found'))
 
       s3.on('error', function (err) {
         error(res, 500, err)
       })
 
+      // Force browser to download file
       res.setHeader('Content-disposition', 'attachment; filename=job.csv')
       res.setHeader('Content-type', 'text/csv')
 
+      // This is where the magic happens!
       s3.pipe(zlib.createGunzip())
         .pipe(MStream())
         .pipe(csv())
@@ -46,18 +47,18 @@ if (cluster.isMaster) {
     })
   })
 
-  server.listen(3000)
+  server.listen(PORT)
+  console.log('Listening on port ' + PORT)
 }
 
 function error (res, code, err) {
-  // TODO: log error
+  // TODO: log error in database for later examination
   console.log(err.stack)
 
   // Send error page
   res.statusCode = code
   res.end(code + ' ' + err.message || err)
 }
-
 
 util.inherits(MStream, stream.Transform)
 
