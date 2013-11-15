@@ -1,0 +1,18 @@
+node_modules/
+secret.js
+
+# Numerous always-ignore extensions
+*.diff
+*.err
+*.orig
+*.log
+*.rej
+*.swo
+*.swp
+*.vi
+*~
+*.sass-cache
+.DS_Store
+Thumbs.db
+*.sublime-workspace
+*.sublime-project
