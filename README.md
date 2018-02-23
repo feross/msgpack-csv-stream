@@ -1,5 +1,7 @@
 # msgpack -> csv stream
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/feross/msgpack-csv-stream.svg)](https://greenkeeper.io/)
+
 ## Installation
 
 [Install node](http://nodejs.org/) if you don't have it already.
